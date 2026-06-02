@@ -1035,15 +1035,8 @@ textarea.fi{resize:none;height:80px}
 </div>
 
 <script>
-// SPLASH → LOGIN → APP
-setTimeout(()=>{
-  const s=document.getElementById('splash');
-  s.style.opacity='0';
-  setTimeout(()=>{
-    s.style.display='none';
-    document.getElementById('login').style.display='flex';
-  },700);
-},2200);
+// SPLASH controlado pelo Firebase onAuthStateChanged
+// Timer removido para evitar conflito
 
 function loginSocial(provider){
   const login=document.getElementById('login');
@@ -1630,11 +1623,17 @@ auth.onAuthStateChanged(user=>{
     document.getElementById('splash').style.display='none';
     entrarNoApp(user);
   } else {
-    document.getElementById('splash').style.opacity='0';
+    const splash=document.getElementById('splash');
+    splash.style.opacity='0';
+    splash.style.transition='opacity .5s';
     setTimeout(()=>{
-      document.getElementById('splash').style.display='none';
-      document.getElementById('login').style.display='flex';
-    },700);
+      splash.style.display='none';
+      const login=document.getElementById('login');
+      login.style.display='flex';
+      login.style.opacity='0';
+      login.style.transition='opacity .5s';
+      setTimeout(()=>login.style.opacity='1',50);
+    },500);
   }
 });
 
