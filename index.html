@@ -4,6 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>PaceAI</title>
+<!-- FIREBASE COMPAT — deve ser o primeiro script -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAzPqWRCsbdAd4oqEYppeyd7dfGZoyWNdU",
+  authDomain:"pace-ai-coach.firebaseapp.com",
+  projectId:"pace-ai-coach",
+  storageBucket:"pace-ai-coach.firebasestorage.app",
+  messagingSenderId:"824371498586",
+  appId:"1:824371498586:web:d747aecc7b76a2dd97d263"
+});
+const auth=firebase.auth();
+const db=firebase.firestore();
+const googleProvider=new firebase.auth.GoogleAuthProvider();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1606,8 +1623,85 @@ function toggleStrava(){
 }
 </script>
 
-<!-- FIREBASE SDK -->
-<script type="module">
+<script>
+// FIREBASE AUTH LOGIC
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.getElementById('splash').style.display='none';
+    entrarNoApp(user);
+  } else {
+    document.getElementById('splash').style.opacity='0';
+    setTimeout(()=>{
+      document.getElementById('splash').style.display='none';
+      document.getElementById('login').style.display='flex';
+    },700);
+  }
+});
+
+function loginSocial(p){
+  if(p==='Google'){
+    auth.signInWithPopup(googleProvider)
+      .then(r=>{salvarUsuario(r.user);entrarNoApp(r.user);})
+      .catch(e=>alert('Erro Google: '+e.message));
+  }
+}
+
+function loginEmail(){
+  const email=document.getElementById('login-email').value.trim();
+  const senha=document.getElementById('login-senha').value;
+  if(!email||!senha){alert('Preencha email e senha.');return;}
+  auth.signInWithEmailAndPassword(email,senha)
+    .then(r=>{salvarUsuario(r.user);entrarNoApp(r.user);})
+    .catch(()=>{
+      auth.createUserWithEmailAndPassword(email,senha)
+        .then(r=>{salvarUsuario(r.user);entrarNoApp(r.user);})
+        .catch(e=>alert('Erro: '+e.message));
+    });
+}
+
+function salvarUsuario(user){
+  db.collection('usuarios').doc(user.uid).get().then(snap=>{
+    if(!snap.exists){
+      db.collection('usuarios').doc(user.uid).set({
+        nome:user.displayName||'',
+        email:user.email||'',
+        foto:user.photoURL||'',
+        criadoEm:new Date().toISOString(),
+        plano:'gratuito'
+      });
+    }
+  });
+}
+
+function entrarNoApp(user){
+  const login=document.getElementById('login');
+  if(login){login.style.opacity='0';login.style.transition='opacity .4s';}
+  setTimeout(()=>{
+    if(login)login.style.display='none';
+    document.getElementById('app').classList.add('show');
+    const nome=user.displayName||user.email.split('@')[0];
+    document.getElementById('h-name').textContent=nome.split(' ')[0];
+    const av=document.getElementById('tb-av');
+    if(user.photoURL){
+      av.style.backgroundImage='url('+user.photoURL+')';
+      av.style.backgroundSize='cover';
+      av.style.backgroundPosition='center';
+      av.textContent='';
+    } else {
+      av.textContent=nome.charAt(0).toUpperCase();
+    }
+    if(document.getElementById('cfg-email'))
+      document.getElementById('cfg-email').textContent=user.email;
+    initAll();
+  },400);
+}
+
+function fazerLogout(){
+  auth.signOut().then(()=>location.reload());
+}
+</script>
+</body>
+</html>
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
