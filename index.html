@@ -1595,16 +1595,45 @@ function mostrarResumo(){
 
 // FEEDBACK
 function selFb(el,tipo){document.querySelectorAll('.fb-o').forEach(f=>f.classList.remove('sel'));el.classList.add('sel');fbSel=tipo;}
-function enviarFb(){
+// FEEDBACK
+function selFb(el,tipo){document.querySelectorAll('.fb-o').forEach(f=>f.classList.remove('sel'));el.classList.add('sel');fbSel=tipo;}
+
+async function enviarFb(){
   if(!fbSel){alert('Selecione como foi o treino.');return;}
-  const msgs={
-    facil:'Entendido. Esta semana é de adaptação — a progressão é intencional. Na próxima semana elevamos gradualmente. Continue assim. 💪',
-    perfeito:'Perfeito! Exatamente o esperado. Mantenha sono e hidratação em dia. 💚',
-    pesado:'Recebido. Como foi seu sono nos últimos 2 dias? E a hidratação? Esses fatores costumam explicar a sensação antes de qualquer ajuste no plano.',
-    nao:'Tudo bem. Me conta o que impediu — cansaço, dor ou falta de tempo? Vou reorganizar a semana sem sobrecarregar.'
-  };
   const obs=document.getElementById('fb-obs').value;
-  document.getElementById('ia-txt').textContent=msgs[fbSel]+(obs?`\n\n[Nota: "${obs}"]`:'');
+  const btnFb=document.querySelector('[onclick="enviarFb()"]');
+  const textoOriginal=btnFb.textContent;
+  btnFb.textContent='Analisando com IA...';
+  btnFb.disabled=true;
+
+  const labels={facil:'Fácil demais',perfeito:'Perfeito',pesado:'Pesado',nao:'Não consegui concluir'};
+
+  try{
+    const response=await fetch('/api/insight',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        perfil:{
+          nome:D.nome||'Atleta',
+          idade:D.idade||30,
+          fcrep:D.fcrep||60,
+          fcmax:D.fcmax||190,
+          esporte:[...document.querySelectorAll('#s2 .chip.on')].map(c=>c.textContent.trim()).join(', ')||'Endurance',
+          nivel:document.querySelector('[onclick*="niv"].on')?.textContent.trim()||'Intermediário',
+          objetivo:document.querySelector('#obj-ch .chip.on')?.textContent.trim()||'Performance'
+        },
+        treino:document.getElementById('home-tc')?.textContent||'Treino do dia',
+        feedback:labels[fbSel]+(obs?' — Observação: '+obs:'')
+      })
+    });
+    const data=await response.json();
+    document.getElementById('ia-txt').textContent=data.insight||'Não foi possível gerar o insight agora.';
+  }catch(e){
+    document.getElementById('ia-txt').textContent='Erro ao conectar com a IA. Tente novamente em instantes.';
+  }
+
+  btnFb.textContent=textoOriginal;
+  btnFb.disabled=false;
   document.getElementById('ia-box').classList.add('show');
 }
 
