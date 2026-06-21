@@ -1846,7 +1846,7 @@ async function carregarDadosSalvos(){
       }
     }
   }catch(e){
-    console.log('Sem dados salvos ainda');
+    console.log('ERRO REAL:', e.message, e.stack);
   }
 }
 
