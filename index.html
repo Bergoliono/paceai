@@ -1934,10 +1934,6 @@ const firebaseConfig = {
   measurementId: "G-Q37MEMY078"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
 
 // Verifica se já está logado
 onAuthStateChanged(auth, (user) => {
