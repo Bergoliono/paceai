@@ -1838,6 +1838,7 @@ async function carregarDadosSalvos(){
           calcZonas();
         }
         atualizarHomeComDadosSalvos();
+        mostrarPerfilJaSalvo();
       }
     }
   }catch(e){
@@ -1861,6 +1862,13 @@ function atualizarHomeComDadosSalvos(){
       ]
     });
   }
+}
+
+function mostrarPerfilJaSalvo(){
+  if(!D.nome)return;
+  document.getElementById('s1').classList.add('hidden');
+  document.getElementById('s-done').classList.remove('hidden');
+  mostrarResumo();
 }
 
 function renderPlanilhaSalva(semana){
