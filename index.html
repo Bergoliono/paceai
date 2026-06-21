@@ -1589,8 +1589,12 @@ async function salvarPerfilEPlanilha(semana){
   try{
     const esps=[...document.querySelectorAll('#s2 .chip.on')].map(c=>c.textContent.trim()).join(', ');
     const niv=document.querySelector('[onclick*="niv"].on')?.textContent.trim()||'';
+    const met=document.querySelector('[onclick*="met"].on')?.textContent.trim()||'';
+    const dias=document.querySelector('[onclick*="dias"].on')?.textContent.trim()||'';
     D.esporteTexto=esps;
     D.nivelTexto=niv;
+    D.metodoTexto=met;
+    D.diasTexto=dias;
 
     await db.collection('usuarios').doc(usuarioAtual.uid).set({
       perfil:D,
@@ -1675,13 +1679,13 @@ function expDay(id,el){
 }
 
 function mostrarResumo(){
-  const esps=[...document.querySelectorAll('#s2 .chip.on')].map(c=>c.textContent.trim());
-  const niv=document.querySelector('[onclick*="niv"].on')?.textContent||'—';
-  const met=document.querySelector('[onclick*="met"].on')?.textContent||'—';
-  const dias=document.querySelector('[onclick*="dias"].on')?.textContent||'—';
+  const esps=D.esporteTexto||[...document.querySelectorAll('#s2 .chip.on')].map(c=>c.textContent.trim()).join(', ');
+  const niv=D.nivelTexto||document.querySelector('[onclick*="niv"].on')?.textContent||'—';
+  const met=D.metodoTexto||document.querySelector('[onclick*="met"].on')?.textContent||'—';
+  const dias=D.diasTexto||document.querySelector('[onclick*="dias"].on')?.textContent||'—';
   document.getElementById('res-wrap').innerHTML=[
     ['Nome',D.nome],['Idade',D.idade+' anos'],['FC Repouso',D.fcrep+' bpm'],
-    ['FC Máxima',D.fcmax+' bpm'],['Peso',D.peso+' kg'],['Esporte',esps.join(', ')],
+    ['FC Máxima',D.fcmax+' bpm'],['Peso',D.peso+' kg'],['Esporte',esps],
     ['Nível',niv],['Método',met],['Dias/semana',dias],
   ].map(([l,v])=>`<div class="res-row"><span style="color:var(--muted)">${l}</span><span style="font-weight:700;font-family:'JetBrains Mono',monospace">${v}</span></div>`).join('');
 }
@@ -1838,7 +1842,7 @@ async function carregarDadosSalvos(){
           calcZonas();
         }
         atualizarHomeComDadosSalvos();
-        mostrarPerfilJaSalvo();
+        
       }
     }
   }catch(e){
@@ -1851,6 +1855,15 @@ function atualizarHomeComDadosSalvos(){
   document.getElementById('h-sub').textContent=(D.esporteTexto||'')+' · '+(D.nivelTexto||'');
   document.getElementById('agua-home-meta').textContent='Meta: '+D.aguaMeta+' ml';
   document.getElementById('agua-meta-s').textContent='Meta: '+D.aguaMeta+' ml';
+  document.getElementById('h-fcmax').textContent=D.fcmax;
+  document.getElementById('h-fcrep').textContent=D.fcrep;
+  document.getElementById('ready-num').textContent='82';
+  document.getElementById('ready-status').textContent='ÓTIMO';
+  document.getElementById('ready-desc').textContent='Seu corpo está pronto para treinar hoje.';
+  document.getElementById('r-hrv').textContent='62 ';
+  document.getElementById('r-sleep').textContent='7h30 ';
+  document.getElementById('r-rec').textContent='89% ';
+  document.getElementById('ready-circle').style.strokeDashoffset=188.5-(188.5*(82/100));
   if(D.zonas){
     const z=D.zonas;
     document.getElementById('home-tc').innerHTML=buildTC({
