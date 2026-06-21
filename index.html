@@ -1578,9 +1578,28 @@ async function gerarPlanilhaIA(){
     document.getElementById('pl-wrap').innerHTML=html;
     const t=document.querySelector('.wd.today');
     if(t){const b=t.querySelector('.wd-body');if(b){b.classList.add('open');t.classList.add('exp');}}
-
+    await salvarPerfilEPlanilha(data.semana);
   }catch(e){
     gerarPlanilha();
+  }
+}
+
+async function salvarPerfilEPlanilha(semana){
+  if(!usuarioAtual)return;
+  try{
+    const esps=[...document.querySelectorAll('#s2 .chip.on')].map(c=>c.textContent.trim()).join(', ');
+    const niv=document.querySelector('[onclick*="niv"].on')?.textContent.trim()||'';
+    D.esporteTexto=esps;
+    D.nivelTexto=niv;
+
+    await db.collection('usuarios').doc(usuarioAtual.uid).set({
+      perfil:D,
+      zonas:D.zonas,
+      planilhaSemana:semana,
+      planilhaGeradaEm:new Date().toISOString()
+    },{merge:true});
+  }catch(e){
+    console.log('Erro ao salvar planilha',e);
   }
 }
 
@@ -1775,10 +1794,13 @@ function salvarUsuario(user){
   });
 }
 
+let usuarioAtual=null;
+
 function entrarNoApp(user){
+  usuarioAtual=user;
   const login=document.getElementById('login');
   if(login){login.style.opacity='0';login.style.transition='opacity .4s';}
-  setTimeout(()=>{
+  setTimeout(async ()=>{
     if(login)login.style.display='none';
     document.getElementById('app').classList.add('show');
     const nome=user.displayName||user.email.split('@')[0];
@@ -1794,8 +1816,83 @@ function entrarNoApp(user){
     }
     if(document.getElementById('cfg-email'))
       document.getElementById('cfg-email').textContent=user.email;
+
     initAll();
+    await carregarDadosSalvos();
   },400);
+}
+
+async function carregarDadosSalvos(){
+  if(!usuarioAtual)return;
+  try{
+    const doc=await db.collection('usuarios').doc(usuarioAtual.uid).get();
+    if(doc.exists){
+      const dados=doc.data();
+      if(dados.perfil){
+        D=dados.perfil;
+        if(dados.planilhaSemana){
+          renderPlanilhaSalva(dados.planilhaSemana);
+        }
+        if(dados.zonas){
+          D.zonas=dados.zonas;
+          calcZonas();
+        }
+        atualizarHomeComDadosSalvos();
+      }
+    }
+  }catch(e){
+    console.log('Sem dados salvos ainda');
+  }
+}
+
+function atualizarHomeComDadosSalvos(){
+  if(!D.nome)return;
+  document.getElementById('h-sub').textContent=(D.esporteTexto||'')+' · '+(D.nivelTexto||'');
+  document.getElementById('agua-home-meta').textContent='Meta: '+D.aguaMeta+' ml';
+  document.getElementById('agua-meta-s').textContent='Meta: '+D.aguaMeta+' ml';
+  if(D.zonas){
+    const z=D.zonas;
+    document.getElementById('home-tc').innerHTML=buildTC({
+      tipo:'Fundo Aeróbico — Zona 2',tag:'Z2',tagCls:'tag-z2',dur:'60 min',
+      fases:[
+        {c:'var(--z1)',n:'Aquecimento progressivo',d:`Zona 1 · ${z[0].lo}–${z[0].hi} bpm`,t:'10 min'},
+        {c:'var(--z2)',n:'Bloco principal',d:`Zona 2 · ${z[1].lo}–${z[1].hi} bpm`,t:'40 min'},
+        {c:'var(--z1)',n:'Volta à calma',d:`Zona 1 · abaixo de ${z[0].hi} bpm`,t:'10 min'},
+      ]
+    });
+  }
+}
+
+function renderPlanilhaSalva(semana){
+  const coresZona={'Zona 1':'var(--z1)','Zona 2':'var(--z2)','Zona 3':'var(--z3)','Zona 4':'var(--z4)','Zona 5':'var(--z5)'};
+  const tagClasses={'Z1':'tag-z1','Z2':'tag-z2','Z3':'tag-z3','Z4':'tag-z4','INT':'tag-int','PROG':'tag-z3','LONG':'tag-z2','REC':'tag-z1'};
+  const hoje=new Date();
+  let html='';
+  semana.forEach((diaInfo,i)=>{
+    const dia=new Date(hoje);
+    dia.setDate(hoje.getDate()-hoje.getDay()+1+i);
+    const isHoje=dia.toDateString()===hoje.toDateString();
+    const temT=!diaInfo.descanso;
+    const tagCls=tagClasses[diaInfo.tag]||'tag-z2';
+    const eid='exps'+i;
+    html+=`<div class="wd ${isHoje?'today':''}" onclick="expDay('${eid}',this)">
+      <div class="wd-h">
+        <div class="wd-num"><div class="wdn">${dia.getDate()}</div><div class="wdm">${diaInfo.dia.substring(0,3)}</div></div>
+        <div class="wd-info"><div class="wd-t">${diaInfo.tipo}</div><div class="wd-s">${diaInfo.descricao}</div></div>
+        <span class="tc-tag ${temT?tagCls:'tag-off'}">${temT?diaInfo.tag:'OFF'}</span>
+      </div>
+      ${temT&&diaInfo.fases?`<div class="wd-body" id="${eid}">
+        ${diaInfo.fases.map(f=>`<div class="tc-phase">
+          <div class="ph-dot" style="background:${coresZona[f.zona]||'var(--z2)'}"></div>
+          <div class="ph-info"><div class="ph-n">${f.nome}</div><div class="ph-d">${f.zona} · ${f.bpm}</div></div>
+          <div class="ph-t">${f.duracao}</div>
+        </div>`).join('')}
+      </div>`:''}
+    </div>`;
+  });
+  document.getElementById('pl-wrap').innerHTML=html;
+  const t=document.querySelector('.wd.today');
+  if(t){const b=t.querySelector('.wd-body');if(b){b.classList.add('open');t.classList.add('exp');}}
 }
 
 function fazerLogout(){
