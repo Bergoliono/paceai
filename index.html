@@ -1833,20 +1833,19 @@ async function carregarDadosSalvos(){
     if(doc.exists){
       const dados=doc.data();
       if(dados.perfil){
-        D=dados.perfil;
-        if(dados.planilhaSemana){
-          renderPlanilhaSalva(dados.planilhaSemana);
-        }
-        if(dados.zonas){
-          D.zonas=dados.zonas;
-          calcZonas();
-        }
-        atualizarHomeComDadosSalvos();
-        
-      }
+  D=dados.perfil;
+  if(dados.planilhaSemana){
+    renderPlanilhaSalva(dados.planilhaSemana);
+  }
+  if(dados.zonas){
+    D.zonas=dados.zonas;
+  }
+  atualizarHomeComDadosSalvos();
+  mostrarPerfilJaSalvo();
+}
     }
   }catch(e){
-    console.log('ERRO REAL:', e.message, e.stack);
+    console.log('Sem dados salvos ainda');
   }
 }
 
@@ -1855,8 +1854,6 @@ function atualizarHomeComDadosSalvos(){
   document.getElementById('h-sub').textContent=(D.esporteTexto||'')+' · '+(D.nivelTexto||'');
   document.getElementById('agua-home-meta').textContent='Meta: '+D.aguaMeta+' ml';
   document.getElementById('agua-meta-s').textContent='Meta: '+D.aguaMeta+' ml';
-  document.getElementById('h-fcmax').textContent=D.fcmax;
-  document.getElementById('h-fcrep').textContent=D.fcrep;
   document.getElementById('ready-num').textContent='82';
   document.getElementById('ready-status').textContent='ÓTIMO';
   document.getElementById('ready-desc').textContent='Seu corpo está pronto para treinar hoje.';
