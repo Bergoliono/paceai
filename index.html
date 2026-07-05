@@ -1667,7 +1667,7 @@ function finalizar(){
   const met=document.querySelector('[onclick*="met"].on');
   if(!niv){alert('Selecione seu nível.');return;}
   if(!met){alert('Selecione seu método.');return;}
-  calcZonas(); atualizarHome(); gerarPlanilha(); mostrarResumo();
+  calcZonas(); atualizarHome(); gerarPlanilhaIA(); mostrarResumo();
   document.getElementById('s4').classList.add('hidden');
   document.getElementById('s-done').classList.remove('hidden');
   document.querySelector('.scroll').scrollTop=0;
